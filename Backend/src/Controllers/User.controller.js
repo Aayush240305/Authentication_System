@@ -37,7 +37,7 @@ const createUser = asyncHandler(async (req, res) => {
 
     const user = await User.create({name, email, password});
 
-    const createdUser = await findById(user._id).select('-password -refreshToken');
+    const createdUser = await User.findById(user._id).select('-password -refreshToken');
 
     if(!createdUser) {
         throw new apiError(500, "Something went wrong! Try again")
@@ -53,16 +53,16 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new apiError(400, 'Email and password are required');
     }
 
-    const user = await user.findOne({email});
+    const user = await User.findOne({email});
 
     if(!user){
         throw new apiError(400, 'User not found');
     }
 
-    const isPasswordCorrect = await user.isPasswordCorrect(password)
+    const isPasswordCorrect = await user.comparePassword(password)
 
     if(!isPasswordCorrect){
-        throw new apiError(400, 'Invalid password');
+        throw new apiError(401, 'Invalid password');
     }
 
     const {accessToken, refreshToken} = await createAccessAndRefreshToken(user.id)
