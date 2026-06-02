@@ -18,6 +18,16 @@ const userSchema = new mongoose.Schema({
   },
   refreshToken: {
     type: String,
+  },
+  otp:{
+    type: String,
+  },
+  otpExpiry:{
+    type: Date,
+  },
+  passwordResetPermission:{
+    type: Boolean,
+    default: false,
   }
 }, { timestamps: true });
 
@@ -31,15 +41,20 @@ userSchema.methods.comparePassword = async function (password) {
 };
 
 userSchema.methods.generateAccessToken = function () {
-    return jwt.sign({ id: this._id }, 
+    return jwt.sign({ _id: this._id }, 
         process.env.ACCESS_TOKEN_SECRET, 
         { expiresIn: process.env.ACCESS_TOKEN_EXPIRY});
 };
 
 userSchema.methods.generateRefreshToken = function () {
-    return jwt.sign({ id: this._id }, 
+    return jwt.sign({ _id: this._id }, 
         process.env.REFRESH_TOKEN_SECRET, 
         { expiresIn: process.env.REFRESH_TOKEN_EXPIRY });
+}
+
+userSchema.methods.generateOTP = function () {
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    return otp;
 }
 
 export const User = mongoose.model('User', userSchema);
