@@ -21,7 +21,7 @@ const createAccessAndRefreshToken = async(userId)=>{
 
 const options = {
   httpOnly:true,
-  secure:false
+  secure:true,
 }
 
 const createUser = asyncHandler(async (req, res) => {
@@ -43,6 +43,16 @@ const createUser = asyncHandler(async (req, res) => {
     if(!createdUser) {
         throw new apiError(500, "Something went wrong! Try again")
     }
+
+    const otp = user.generateOTP();
+    
+    user.otp = otp;
+
+    user.otpExpiry = Date.now() + 5*60*1000;
+
+    await user.save({validateBeforeSave:false});
+
+    await sendOTP(email, otp);
     
     return res.status(201).json(new apiResponse(201, createdUser, 'User created successfully'));
 });
@@ -64,6 +74,20 @@ const loginUser = asyncHandler(async (req, res) => {
 
     if(!isPasswordCorrect){
         throw new apiError(401, 'Invalid password');
+    }
+
+    if(!user.isEmailVerified){
+      const otp = user.generateOTP();
+
+      user.otp = otp;
+
+      user.otpExpiry = Date.now() + 5*60*1000;
+
+      await user.save({validateBeforeSave:false});
+
+      await sendOTP(email, otp);
+
+      return res.status(403).json(new apiResponse(403, {}, "Email not verified. OTP sent to email for verification"))
     }
 
     const {accessToken, refreshToken} = await createAccessAndRefreshToken(user._id)
@@ -165,6 +189,32 @@ const logoutUser = asyncHandler(async (req, res)=>{
 
  })
 
+ const verifyOTPEmailVerification = asyncHandler(async(req,res)=>{
+  const {email,otp} = req.body;
+  if(!email || !otp){
+    throw new apiError(401, "Email and OTP are required")
+  }
+
+  const user = await User.findOne({email});
+
+  if(!user){
+    throw new apiError(404, "User not found")
+  }
+
+  if(user.otp !== otp || user.otpExpiry < Date.now()){
+    throw new apiError(400, "Invalid or expired OTP")
+  }
+
+  user.isEmailVerified = true;
+  user.otp = undefined;
+  user.otpExpiry = undefined;
+
+  await user.save({validateBeforeSave:false});
+
+  return res.status(200).json(new apiResponse(200, {}, "Email verified successfully"))
+
+ })
+
  const resetPassword = asyncHandler(async(req,res)=>{
   const {email, newPassword} = req.body;
 
@@ -191,4 +241,4 @@ const logoutUser = asyncHandler(async (req, res)=>{
 
  })
 
-export {createUser, loginUser, logoutUser, getUser, sendEmailOTP, verifyOTPPassword, resetPassword};
+export {createUser, loginUser, logoutUser, getUser, sendEmailOTP, verifyOTPPassword, resetPassword, verifyOTPEmailVerification};

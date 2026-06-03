@@ -38,7 +38,11 @@ function Signup() {
     try{
       await axios.post('/api/v1/users/register', {name, email, password}, { withCredentials: true });
       toast.success("Account Created Successfully !");
-      navigate("/")
+      navigate("/verify-email", {
+        state: {
+          email
+        }
+      })
     } catch (err) {
       if(err?.response?.status === 400){
         toast.error("User Already Exists !")

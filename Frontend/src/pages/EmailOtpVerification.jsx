@@ -18,7 +18,7 @@ import { toast } from 'react-toastify'
 import {useNavigate, useLocation} from "react-router-dom";
 
 
-function OtpVerification() {
+function EmailOtpVerification() {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location?.state?.email;
@@ -28,7 +28,7 @@ function OtpVerification() {
   useEffect(()=>{
 
    if(!email){
-      navigate("/")
+      navigate("/signup")
    }
 
   },[email, navigate])
@@ -44,14 +44,10 @@ function OtpVerification() {
     }
  
     try{
-      await axios.post('/api/v1/users/verifyOTP', {email,otp}, { withCredentials: true });
-      toast.success("OTP verified successfully!");
-      navigate("/reset-password",{
-        state:{
-            email
-        }
-      })
-    } catch (err) {
+      await axios.post('/api/v1/users/verifyEmail', {email,otp}, { withCredentials: true });
+      toast.success("Email verified successfully!");
+      navigate("/")
+      }catch (err) {
       if(err?.response?.status === 400){
         toast.error("Otp is invalid or expired!")
       }else{
@@ -75,7 +71,7 @@ function OtpVerification() {
         <form className="w-full" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-6">
             <div className="flex items-center justify-center">
-              <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)} autofocus >
+              <InputOTP maxLength={6} value={otp} onChange={(value) => setOtp(value)}>
                 <InputOTPGroup>
                     <InputOTPSlot index={0} className="border-gray-700"/>
                     <InputOTPSlot index={1} className="border-gray-700"/>
@@ -95,5 +91,5 @@ function OtpVerification() {
   )
 }
 
-export default OtpVerification
+export default EmailOtpVerification
             

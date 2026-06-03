@@ -36,6 +36,13 @@ function Login() {
         toast.error("User Not Found !")
       }else if(err?.response?.status === 401){
         toast.error("Incorrect Password!")
+      }else if(err?.response?.status === 403){
+        toast.error("Please verify your email before logging in!")
+        navigate("/verify-email", {
+          state: {
+            email
+          }
+        })
       }else{
         toast.error("Something went wrong!")
       }
